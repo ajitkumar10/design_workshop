@@ -1,56 +1,17 @@
 ReportConfig
 	.id()
 	.rptName("report {report_type} - {report_sub_type}")
-	.email(
-		new EmailConfig()
-		.fromEmail()
-		.toEmail()
-		.ccEmail()
-		.bccEmail()
-		.subject()  -- Append Env 
-		.body()
-		.attachments(defaults to reportFileName)
-		.build(),
-		
-		--more email configs
-		)
-	.ftp (
-		new FtpConfig()
-		 .ftpHost()
-		 .ftpUser()
-		 .ftpPort()
-		 .ftpPasswd()
-		 .ftpDir()
-		 .ftpFileName(defaults to reportFileName)
-		 .retryAfter(15 min)
-		 .retryAttempts(-1) never
-		 .build(),
-		 
-		 -- more ftp configs
-		)
-	.sftp (
-		new SftpConfig()
-		 .sftpHost()
-		 .sftpUser()
-		 .sftpPassword()
-		 .sftpPort()
-		 .sftpDir()
-		 .sftpFileName(defaults to reportFileName)
-		 .build(),
-		 
-		 -- more sftp configs
-		)
-	.rptDir()	
-	.rptFile(r_openorder_ssic_$date.csv)
-	.rptDaysToKeep(5)
-	.dataSource(
+	.rptOutputDir()	
+	.rptOutputFileName(r_openorder_ssic_$date.csv)
+	.rptOutputFileDaysToKeep(5)
+	.rptInputDataSource(
 		new SqlSource(),
 		-- or new TextFileSource()
 		-- or new DBSource()
 		)
-	.headerOverride() -- override header coming from datasource	
+	.headerDefaultOverride() -- override header coming from datasource e.g. SQL source header will have columns names
 	.headerOn()
-	.footerOverride()
+	.footerDefaultOverride() -- default is TLR|{record_Count}
 	.footerOn
 	.repeatHeaderFooterAfterLines()
 	.output(
@@ -60,10 +21,10 @@ ReportConfig
 		.build()
 	)
 	.compress()
-	.logDir()
-	.logFileName()
-	.logDaysToKeep()
-	.build();
+	.rptLogDir()
+	.rptLogFileName()
+	.rptLogDaysToKeep()
+	.build(); --calls validate, use validate to test config
 
 JobScheduler
 	.jobId()
@@ -74,10 +35,12 @@ JobScheduler
 	.runOnUKHolidays(true)
 	.whenDependencyNotMet(devEmailConsumer,jsonConsumer)
 	.whenFailed(devEmailConsumer,jsonConsumer)
-	.alertIfNotCompleted
+	.whenDelayed()
+	.whenCompleted()
+	.alertIfNotCompleted()
 	.retryDependencyCheckAfter(15)
 	.maxWaitTimeForDependency()
 	.frequency(DLY|MTH|EOM|QTR|Intraday|CronParser)
 	.build()
-	.run();
+	.schedule();
 	
