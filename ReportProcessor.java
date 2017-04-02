@@ -1,3 +1,11 @@
+
+
+SourceReader 		==> DataStager/Cache 		==> DataTransformer 	==> TargetWriter 	==> Delivery 
+(SQL,DB,FlatFile)	  (Read into local objects)	(Business Rules)	(CSV,XLS,PDF,Delimited)	   (Email,FTP,SFTP)
+
+Monitoring and Alerts
+(Events generated at each stage)
+
 ReportConfig
 	.id()
 	.rptName("report {report_type} - {report_sub_type}")
@@ -9,7 +17,7 @@ ReportConfig
 		-- or new TextFileSource()
 		-- or new DBSource()
 		)
-	.headerDefaultOverride() -- override header coming from datasource e.g. SQL source header will have columns names
+	.headerDefaultOverride() -- override header coming from datasource e.g. default header will be column names for SQL source
 	.headerOn()
 	.footerDefaultOverride() -- default is TLR|{record_Count}
 	.footerOn
@@ -28,18 +36,17 @@ ReportConfig
 
 JobScheduler
 	.jobId()
-	.dependsOn(job1)
-	.dependsOn(job2)
+	.dependsOn(job1, job2)
 	.runOnWeekends(true)
-	.runOnUSHolidays(true)
+	.runOnUSHolidays(false)
 	.runOnUKHolidays(true)
+	.whenStarted(devEmailConsumer,jsonConsumer)
 	.whenDependencyNotMet(devEmailConsumer,jsonConsumer)
+	.retryDependencyCheckAfter(15, TimeUnit.MINUTES)
+	.maxWaitTimeForDependency(LocalDateTime.of(rptRunDate, LocalTime.of(23,0)))  -- 11:00 PM of report run date  
 	.whenFailed(devEmailConsumer,jsonConsumer)
-	.whenDelayed()
-	.whenCompleted()
-	.alertIfNotCompleted()
-	.retryDependencyCheckAfter(15)
-	.maxWaitTimeForDependency()
+	.whenDelayed(devEmailConsumer,jsonConsumer)
+	.whenCompleted(devEmailConsumer,jsonConsumer)
 	.frequency(DLY|MTH|EOM|QTR|Intraday|CronParser)
 	.build()
 	.schedule();
